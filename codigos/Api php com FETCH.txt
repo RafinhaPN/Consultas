@@ -1,0 +1,442 @@
+                                              API PHP                                       
+                     AGENDA ELETRONICA
+<?php
+                                  LISTAR TODOS CONTATO
+include './conexao/conexao.php';
+header("Access-Control-Allow-Origin: *");
+header("Content-Type: application/json; charset=UTF-8");
+header("Acess-Controll-Allow-Methods: GET,PUT,POST,DELETE");
+
+$response ="";
+
+$sql = "SELECT * FROM agenda";
+ $res = $conn->prepare($sql);
+ $res->execute();
+
+ if(($res) AND ($res->rowCount()!= 0)){
+    while($row_contato = $res->fetch(PDO::FETCH_ASSOC)){
+       //echo"<pre>";
+       //var_dump($row_contato);
+       extract($row_contato);
+       $lista_contato["results"][$id]=[
+        
+         'id'=> $id,
+         'nome'=>$nome,
+         'sobrenome'=>$sobrenome,
+         'cpf'=>$cpf,
+         'email'=>$email,
+         'telefone'=>$telefone,    
+        
+        
+             
+        //  'id' => $id,
+        //  'nome'=> $nome,
+       //   'email'=>$email
+       ];
+   
+   }
+
+ }
+$response=[
+    "error" => false,
+    "mensagem"=> "Contatos encontrado! "
+];
+http_response_code(200);
+
+//echo json_encode($response);
+
+echo json_encode($lista_contato);
+?>
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+
+                                             VISUALIZAR UM CONTATO
+<?php
+
+include './conexao/conexao.php';
+
+header("Access-Control-Allow-Origin: *");
+header("Content-Type: application/json; charset=UTF-8");
+ //$id=123;
+// pra fica dinaminco              //força que seja inteiro
+$id = filter_input(INPUT_GET,'id',FILTER_SANITIZE_NUMBER_INT);
+//http://localhost/API/visualizar.php?id=124
+
+$response="";
+ $sql = "SELECT id,nome,sobrenome,cpf,email,telefone FROM agenda WHERE id=:id LIMIT 1";
+ $query_cliente = $conn->prepare($sql);
+ $query_cliente->bindParam(':id',$id,PDO::PARAM_INT);
+ $query_cliente->execute();
+ 
+ if(($query_cliente) AND ($query_cliente->rowCount() != 0)){
+   $row_cliente =$query_cliente->fetch(PDO::FETCH_ASSOC);
+   extract($row_cliente);
+
+  // echo var_dump($row_cliente);
+   $contato =[
+       'id'=>$id,
+       'nome'=> $nome,
+       'sobrenome' => $sobrenome,
+       'cpf' =>$cpf,
+       'email'=>$email,
+       'telefone'=>$telefone
+   ];
+    $response = [
+        "erro" => false,
+        "agenda"=> $contato
+        // "messagem"=>"Nenhum cliente encontrado!"
+   ];
+
+ }else{
+   $response = [
+        "erro" => true,
+        "messagem"=>"Nenhum cliente encontrado!"
+   ];
+ }
+
+
+
+
+http_response_code(200);
+echo json_encode($response);
+
+?>
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+                                                   Editar Contato
+<?php
+include './conexao/conexao.php';
+//cabeçalho obrigatorios
+header("Access-Control-Allow-Origin: *");
+header("Content-Type: application/json; charset=UTF-8");
+header("Access-Control-Allow-Headers: *");
+header("Acess-Controll-Allow-Methods: GET,PUT,POST,DELETE");
+
+ //recebe os dados do formulario
+$response_json = file_get_contents("php://input");
+
+//é um objeto pra poder ler o valor
+$dados =json_decode($response_json,true);
+
+$response="";
+
+if($dados){
+
+    $query_cliente = "UPDATE agenda SET nome=:nome, sobrenome=:sobrenome, cpf=:cpf, email=:email, telefone=:telefone WHERE id=:id";
+    $sql = $conn->prepare($query_cliente);
+    $sql->bindParam(':nome',$dados['nome'],PDO::PARAM_STR);
+    $sql->bindParam(':sobrenome',$dados['sobrenome'],PDO::PARAM_STR);
+    $sql->bindParam(':cpf',$dados['cpf'],PDO::PARAM_STR);
+    $sql->bindParam(':email',$dados['email'],PDO::PARAM_STR);
+    $sql->bindParam(':telefone',$dados['telefone'],PDO::PARAM_STR);
+    $sql->bindParam(':id',$dados['id'],PDO::PARAM_INT);
+    $sql->execute();
+
+    //verifica se  foi atualizado  o contato
+    if($sql->rowCount()){
+        $respoonse = [
+            "erro" => false,
+            "mensagem"=>"Cliente editado com Sucesso! ",
+             "dados"=>$sql
+          ]; 
+
+
+    }else{
+        $respoonse = [
+            "erro" => true,
+            "mensagem"=>"Erro: Não foi possivel editar! ",
+           
+          ];
+    }
+
+// verifica se dados não esta vazio 
+  $respoonse = [
+        "erro" => false,
+        "messagem"=>"Cliente editado com Sucesso! ",
+       
+      ];
+
+
+
+
+
+}else{
+     $respoonse = [
+        "erro" => false,
+        "messagem"=>"Erro: Não foi possivel editar! ",
+       
+      ];
+}
+
+http_response_code(200);
+//converte array em objeto
+echo json_encode($respoonse);
+
+
+
+?>
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+                                                CADASTRAR CONTATO
+<?php
+include './conexao/conexao.php';
+
+header("Access-Control-Allow-Origin: *");
+header("Content-Type: application/json; charset=UTF-8");
+header("Access-Control-Allow-Headers: *");
+header("Acess-Controll-Allow-Methods: GET,PUT,POST,DELETE");
+
+$response_json = file_get_contents("php://input");
+
+$dados =json_decode($response_json,true);
+$response ="";
+
+if($dados){
+    $sql = "INSERT INTO agenda (nome, sobrenome, cpf, email, telefone)VALUES(:nome, :sobrenome, :cpf, :email, :telefone)";
+    $cad_Contato = $conn->prepare($sql);
+     
+    $cad_Contato->bindParam(':nome',$dados['contato']['nome']);
+    $cad_Contato->bindParam(':sobrenome', $dados['contato']['sobrenome']);
+    $cad_Contato->bindParam(':cpf', $dados['contato']['cpf']);
+    $cad_Contato->bindParam(':email', $dados['contato']['email']);
+    $cad_Contato->bindParam(':telefone', $dados['contato']['telefone']);
+    $cad_Contato->execute();
+    if($cad_Contato->rowCount()){
+      $response=[
+            "error" => false,
+            "mensagem"=> "contato cadastrado com sucesso! ",
+          
+        ];
+     }
+    else
+    {
+     $response=[
+            "error" => true,
+            "mensagem"=> "contato não cadastrado com sucesso! "
+        ];
+    
+    }
+}
+else
+{
+     $response=[
+            "error" => true,
+            "mensagem"=> "Error: Tente mais tarde!"
+        ];
+
+}
+
+http_response_code(200);
+echo json_encode($response);
+
+?>
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+                                                 APAGAR CONTATO       
+
+<?php
+
+ //cabeçalho obrigatorios
+ header("Access-Control-Allow-Origin: *");
+ header("Content-Type: application/json; charset=UTF-8");
+ 
+ include './conexao/conexao.php';
+//recebe o id pela URL
+ $id =filter_input(INPUT_GET,"id",FILTER_SANITIZE_NUMBER_INT);
+
+ if(!empty($id)){
+    $response =[
+        "erro" => false,
+        "mensagem" => "id encontrado com sucesso .$id"
+   
+    ];
+}else{
+    $response =[
+        "erro" => false,
+        "mensagem" => "id não encontrado"
+   
+    ];
+}
+
+
+ $response ="";
+
+ 
+ $query_contato = "DELETE FROM agenda WHERE id=:id LIMIT 1";
+ $agenda_contato = $conn->prepare($query_contato);
+ $agenda_contato->bindParam(':id',$id,PDO::PARAM_INT);
+         
+       if($agenda_contato->execute()){
+        $response =[
+            "erro" => false,
+            "mensagem" => "Contato apagado com sucesso!"
+       
+        ];
+        }else{
+            $response =[
+                "erro" => true,
+                "mensagem" => "Error:  Contato não apagado com sucesso!"
+           
+            ];
+        }
+ // caso esqueça de por id na URL
+  
+
+ http_response_code(200);
+echo json_encode($response);
+
+
+
+?>
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+                                            FRONT REACT
+ IMSOMNIA no teste
+"results": {
+		"1": {
+			"id": "1",
+			"nome": "Rafael",
+			"sobrenome": "pereira das neves",
+			"cpf": "37003924861",
+			"email": "rafamergulha@hotmail.com",
+			"telefone": "965109147"
+		},
+
+                         LISTAR CONTATO
+  const [data , setData]=useState([]);
+  const  getContato = async ()=>{
+      fetch('http://localhost/API-PHP/index.php')
+     .then((response) => response.json())
+     .then((responsejson)=>(
+       //console.log(responsejson),
+       setData(responsejson.results)
+     ))
+  }
+  useEffect(()=>{
+     getContato();
+  },[]);
+///////////////////////////////////////////////////////////////////////////////////////////////////
+                             APAGAR CONTATO
+
+  const ApagarContato =  async (idContato) =>{
+   console.log(idContato);
+   await fetch('http://localhost/API-PHP/apagar.php?id='+idContato)
+    .then((response)=> response.json())
+    .then((responseJson)=>{
+        console.log(responseJson);
+      // setData(responseJson.agenda);
+    })
+    getContato();
+  }
+<Link className='risco' to={"#"}  onClick={()=>ApagarContato(contato.id)} >Apagar</Link>
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+                                      VISUALIZAR CONTATO
+
+import { Link, useParams } from 'react-router-dom';
+
+function Visualizar(props) {
+    const [data, setData]=useState([]);
+    const {id} = useParams();
+   // console.log(id);
+    useEffect(()=>{
+
+        const buscarContato = async () =>{
+            await fetch("http://localhost/API-PHP/visualizar.php?id=" + id)
+            .then((response)=> response.json())
+            .then((responseJson)=>{
+               // console.log(responseJson);
+               setData(responseJson.agenda);
+            })
+        } 
+        buscarContato();
+
+    },[id])
+//////////////////////////////////////////////////////////////////////////////////////////////////
+                                             EDITAR CONTATO
+import { Link,useParams } from 'react-router-dom';
+function Editar() {
+    
+    const {id} = useParams();
+   // console.log(id)
+
+    const [nome , setNome]=useState('');
+    const [sobrenome, setSobrenome]=useState('');
+    const [cpf , setCpf]=useState('');
+    const [email, setEmail]=useState('');
+    const [telefone , setTelefone]=useState('');
+
+ useEffect(()=>{
+
+        const buscarContato = async () =>{
+            await fetch("http://localhost/API-PHP/visualizar.php?id=" + id)
+            .then((response)=> response.json())
+            .then((responseJson)=>{
+              //  console.log(responseJson.agenda);
+               setNome(responseJson.agenda.nome);
+               setSobrenome(responseJson.agenda.sobrenome);
+               setCpf(responseJson.agenda.cpf);
+               setEmail(responseJson.agenda.email);
+               setTelefone(responseJson.agenda.telefone);
+              })
+        } 
+        buscarContato();
+
+    },[id])
+
+    const EditContato = async e =>{
+        e.preventDefault();
+
+        await fetch("http://localhost/API-PHP/editar.php",{
+           method:"POST",
+           headers:{
+               'Content-Type':'Application/json'
+           },
+             body:JSON.stringify({id,nome,sobrenome,cpf,email,telefone})    
+       }).then((response)=>response.json())
+         .then((responseJson)=>{
+             console.log(responseJson);
+          
+         }).catch(()=>{
+
+         })
+    }
+                  todos os input recebe value={email} onChange={e => setEmail(e.target.value)}
+////////////////////////////////////////////////////////////////////////////////////////////////
+                                      CADASTRAR CONTATO
+    const [contato, setContato] = useState({
+        nome: '',
+        sobrenome: '',
+        cpf: '',
+        email: '',
+        telefone: ''
+      })
+    
+      const enviarInput = e => setContato({ ...contato, [e.target.name]: e.target.value });
+    
+    
+      const Enviar = async e => {
+        e.preventDefault();
+         await fetch('http://localhost/API-PHP/cadastrar.php',{
+          method:'POST',
+          headers:{
+            'Content-Type': 'application/json'
+          },
+          
+          body: JSON.stringify({contato})
+        
+        })
+        
+        .then((response)=> response.json())
+        .then((responsejson)=>(
+            console.log(responsejson)
+        )).catch((err)=>{
+            
+        })
+    
+    
+      }
+    
+   todos os input recebe  onChange={enviarInput} função
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+

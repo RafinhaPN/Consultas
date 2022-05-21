@@ -1,0 +1,224 @@
+/movie/550?api_key=a201904349c5cde87f501d53793dbf35
+
+Criar um sistema web para cadastro de contatos
+- Deve utilizar um banco de dados relacional para armazenar as informações
+- Deve listar todos os contatos
+- Deve poder incluir, editar e excluir os contatos
+- Deve validar campos obrigatórios
+- Deve ter os seguintes campos (*obrigatórios)
+- Nome*
+- Sobrenome*
+- CPF
+- E-mail
+- Telefone*
+
+BÔNUS (opcional fazer)
+- Validar o CPF
+- Validar o E-mail
+- Colocar máscaras nos campos
+- Cadastrar mais de um telefone por pessoa
+- Cadastrar mais de um e-mail por pessoa
+- Pesquisar na lista de pessoas cadastradas
+- Criar o Docker (docker-compose) para rodar a aplicação
+
+Ao terminar o candidato deverá apresentar o projeto na entrevista
+(avise quando terminar o teste que agendamos)
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                 Listar
+import React, { useEffect, useState } from 'react'
+import api from '../../services/api'
+import { Link } from 'react-router-dom';
+
+function Home() {
+
+  const [contatos, setContatos] = useState([]);
+
+  const listar = async () => {
+    await api.get('/listar').then((response) => {
+      // console.log(response.data.contatos);
+      setContatos(response.data.contatos);
+    })
+  }
+
+  useEffect(() => {
+    listar();
+  }, []);
+
+export default Home;
+//================================================================
+                                 Cadastrar
+import React,{useState} from 'react'
+import api from '../../services/api';
+function Contatos() {
+
+  const [dados, setDados  ] = useState({
+    nome:'',
+    telefone:'',
+    email:'',
+  })
+  const [status, setStatus] = useState({
+    type: '',
+    msg: ''
+  });
+  const valueInput = e =>setDados({ ... dados,[e.target.name]: e.target.value}); 
+
+  const addContato = async  e =>{
+    e.preventDefault();
+  
+   if(!dados.nome){
+     alert("Preencha os campos!")
+    }else{
+      const headers = {
+        'headers':{
+            'Content-Type': 'application/json'
+         }
+      }
+
+      await api.post('/',dados,headers).then((response)=>{
+        // console.log(response);
+         setStatus({
+          type: 'success',
+          msg: response.data.mensagem
+        });
+      }).catch((err)=>{
+        // console.log("Error!");
+         if (err.response) {
+          setStatus({
+            type: 'error',
+            msg: err.response.data.mensagem
+          });
+        }
+      }) 
+
+    }
+  }
+export default Contatos;
+//===================================================================
+                                   Editar
+
+import React, { useState, useEffect } from 'react'
+import api from '../../services/api';
+import { useParams } from 'react-router-dom';
+
+function Editar() {
+  const { id } = useParams();
+  const [telefone, setTelefone] = useState("");
+  const [email, setEmail] = useState("");
+//===================================================== 
+                 //buscar  id
+  useEffect(() => {
+    const getContato = async () => {
+      await api.get('/usuario/' + id).then((response) => {
+       // console.log(response.data.contato);
+        setTelefone(response.data.contato.telefone);
+        setEmail(response.data.contato.email);
+      })
+    }
+    getContato();
+  }, [id]); // não esquecer isso, pois pode não conseguir editar 
+
+   // mostrar mensagem pro usuário
+  const [status, setStatus] = useState({
+    type: '',
+    msg: ''
+  });
+  
+
+  //editar contatos 
+  form onsubmit={editcontato}
+  const editContato = async e => { 
+    e.preventDefault();
+    
+  const headers = {
+      'headers': {
+        //os dados serao enviado em formato json
+        'Content-Type': 'application/json'
+      }
+    }
+   await api.put('/usuario/', { id, telefone, email }, headers).then((response) => {
+      
+      setStatus({
+        type: 'success',
+        msg: response.data.mensagem
+      });
+    }).catch((err) => {
+      if (err.response) {
+        setStatus({
+          type: 'error',
+          msg: err.response.data.mensagem
+        });
+      }
+    })
+export default Editar;
+//============================================================
+
+Visualizar / Apagar
+
+import React, { useState, useEffect } from 'react'
+import api from '../../services/api';
+import { useParams } from 'react-router-dom';
+
+function Visualizar() {
+  const { id } = useParams();
+  console.log(id);
+
+  const [data, setData] = useState("");
+
+  // visualizar um contato
+  useEffect(() => {
+    const DetalheContatos = async () => {
+      await api.get('/usuario/' + id).then((response) => {
+        // console.log(response);
+        setData(response.data.contato);
+      }).catch(() => {
+
+      })
+    }
+    DetalheContatos();
+  }, [id]);
+
+  const [status, setStatus] = useState({
+    type: '',
+    msg: ''
+  });
+
+  //funcao apagar
+  const Apagar = async (idcontato) => {
+    //console.log(idcontato);
+
+    await api.delete('/usuario/' + idcontato).then((response) => {
+      //console.log(response)
+      setStatus({
+        type: 'success',
+        msg: response.data.mensagem
+      });
+    }).catch((err) => {
+      console.log("Error!");
+      if (err.response) {
+        setStatus({
+          type: 'error',
+          msg: err.response.data.mensagem
+        });
+      }
+    })
+
+  }
+ <button onClick={() => Apagar(data.id)} >Apagar</button>
+
+export default Visualizar;
+
+
+
+

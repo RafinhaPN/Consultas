@@ -1,0 +1,33 @@
+
+### teste do git
+esse é teste GIT 
+
+isso é uma alteração
+
+
+### $ git init
+
+### $ git add(NomedoArquivo)(com ponto manda todos , sem ponto manda só os escolhido) manda os arquivos pra area de state
+
+### git status mostra as arquivo em state
+
+###  git commit -m "começando os trabalhos"
+
+### para muda blanch de "master" para "main"
+git branch -m "main"
+
+### esse faz a ligação do remoto com o local, é acionado uma vez só 
+git remote add origin https://github.com/RafinhaPN/TESTEGIT.git
+
+
+### em caso de erro 
+git config --global -e painel de controle e gerenciador de grendeciais
+
+
+### pra enviar  digita 
+ git push -u origin main
+
+ ### na segunda vez não precisa do -u
+ git push  origin main
+
+
